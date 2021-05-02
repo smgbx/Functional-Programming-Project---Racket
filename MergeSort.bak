@@ -1,0 +1,4 @@
+#lang racket
+(define (merge A B)
+(cond [(empty? A) B]
+

@@ -1,0 +1,8 @@
+#lang racket
+(define (get-numbers)
+  (map string->number (file->lines "test.txt"))
+  )
+
+(for-each display (get-numbers))
+
+(length (get-numbers))
