@@ -51,3 +51,13 @@
   (check-equal? (sort-file-numbers "test.txt") '(100 90 80 70 60 50 40 30 20 10))
   )
 
+; List of sorted ints -> file
+(define (list->file lst file)
+  (display-lines-to-file lst
+                         file
+                         #:exists 'replace
+                         #:mode 'text))
+
+(time
+ (list->file (sort-file-numbers "numbers.txt") "output.txt")
+ (void))

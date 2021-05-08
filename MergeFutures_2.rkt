@@ -1,0 +1,88 @@
+#lang racket
+(require 2htdp/batch-io)
+
+; merge two lists together in desc order
+(define (merge A B)
+  (cond [(empty? A) B]
+        [(empty? B) A]
+        [(>= (first A) (first B))
+         (cons (first A) (merge (rest A) B))]
+        [else
+         (cons (first B) (merge A (rest B)))]))
+
+; gets first half of list
+(define (firstHalf L)
+  (firstHalfH L (quotient (length L) 2))
+  )
+
+; helper function that gets first half of list 
+(define (firstHalfH L num)
+  (if (= 0 num)
+      '()
+      (cons (first L) (firstHalfH (rest L) (- num 1)))))
+
+; gets second half of list
+(define (secondHalf L)
+  (secondHalfH L (quotient (length L) 2))
+  )
+
+; helper function that gets second half of list
+(define (secondHalfH L num)
+  (if (= num 0)
+      L
+      (secondHalfH (rest L) (- num 1))))
+
+; MergeSort with futures      
+;(define (mergeSort L)
+ ; (cond [(empty? L) L]
+  ;      [(empty? (rest L)) L]
+   ;     [else (merge
+    ;           (let ([f (future (lambda () (mergeSort (firstHalf L))))])
+     ;             (or (mergeSort (secondHalf L))
+      ;              (touch f))))]))
+
+(define (mergeSort L)
+  (cond [(empty? L) L]
+        [(empty? (rest L)) L]
+        [else (let ([f (future (lambda () (mergeSort (firstHalf L))))])
+                  (or (mergeSort (secondHalf L))
+                    (touch f)))
+         (merge
+               (mergeSort (firstHalf L))
+               (mergeSort (secondHalf L)))]))
+
+;(let ([f (future (lambda () (mergeSort (firstHalf L))))])
+ ;                 (or (mergeSort (secondHalf L))
+  ;                  (touch f)))
+  
+; Getting list of numbers from file
+(define (get-numbers filename)
+  (map string->number (file->lines filename))
+  )
+
+; Mergesort numbers in a file
+(define (sort-file-numbers filename)
+  (mergeSort (get-numbers filename))
+  )
+
+(module+ test
+  (require rackunit)
+  (check-equal? (mergeSort '()) '())
+  (check-equal? (mergeSort '(3)) '(3))
+  (check-equal? (mergeSort '(3 8)) '(8 3))
+  (check-equal? (mergeSort '(10 1 6 2 3 9 8 4 7 5)) '(10 9 8 7 6 5 4 3 2 1))
+  (check-equal? (sort-file-numbers "test.txt") '(100 90 80 70 60 50 40 30 20 10))
+  )
+
+; List of sorted ints -> file
+(define (list->file lst file)
+  (display-lines-to-file lst
+                         file
+                         #:exists 'replace
+                         #:mode 'text))
+
+
+(time
+ (list->file (sort-file-numbers "test.txt") "output_futures.txt")
+ (void))
+
